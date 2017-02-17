@@ -1647,14 +1647,14 @@ class Model(Container):
         weights = []
 
         try:
-            self.enqueuer = GeneratorEnqueuer(generator, pickle_safe=pickle_safe)
-            self.enqueuer.start(nb_worker=nb_worker, max_q_size=max_q_size)
+            enqueuer = GeneratorEnqueuer(generator, pickle_safe=pickle_safe)
+            enqueuer.start(nb_worker=nb_worker, max_q_size=max_q_size)
 
             while processed_samples < val_samples:
                 generator_output = None
-                while self.enqueuer.is_running():
-                    if not self.enqueuer.queue.empty():
-                        generator_output = self.enqueuer.queue.get()
+                while enqueuer.is_running():
+                    if not enqueuer.queue.empty():
+                        generator_output = enqueuer.queue.get()
                         break
                     else:
                         time.sleep(.01)
@@ -1675,7 +1675,7 @@ class Model(Container):
 
         finally:
             try:
-                self.enqueuer.stop()
+                enqueuer.stop()
             except NameError:
                 pass
 
@@ -1719,14 +1719,14 @@ class Model(Container):
         all_outs = []
 
         try:
-            self.enqueuer = GeneratorEnqueuer(generator, pickle_safe=pickle_safe)
-            self.enqueuer.start(nb_worker=nb_worker, max_q_size=max_q_size)
+            enqueuer = GeneratorEnqueuer(generator, pickle_safe=pickle_safe)
+            enqueuer.start(nb_worker=nb_worker, max_q_size=max_q_size)
 
             while processed_samples < val_samples:
                 generator_output = None
-                while self.enqueuer.is_running():
-                    if not self.enqueuer.queue.empty():
-                        generator_output = self.enqueuer.queue.get()
+                while enqueuer.is_running():
+                    if not enqueuer.queue.empty():
+                        generator_output = enqueuer.queue.get()
                         break
                     else:
                         time.sleep(.01)
@@ -1759,7 +1759,7 @@ class Model(Container):
 
         finally:
             try:
-                self.enqueuer.stop()
+                enqueuer.stop()
             except NameError:
                 pass
 
