@@ -667,7 +667,7 @@ class NumpyArrayIterator(Iterator):
     def __init__(self, x, y, image_data_generator,
                  batch_size=32, shuffle=False, seed=None,
                  dim_ordering='default',
-                 save_to_dir=None, save_prefix='', save_format='jpeg'):
+                 save_to_dir=None, save_prefix='', save_format='jpeg', cached_features=False):
         if y is not None and len(x) != len(y):
             raise ValueError('X (images tensor) and y (labels) '
                              'should have the same length. '
@@ -675,21 +675,28 @@ class NumpyArrayIterator(Iterator):
                              (np.asarray(x).shape, np.asarray(y).shape))
         if dim_ordering == 'default':
             dim_ordering = K.image_dim_ordering()
-        self.x = np.asarray(x, dtype=K.floatx())
-        if self.x.ndim != 4:
-            raise ValueError('Input data in `NumpyArrayIterator` '
-                             'should have rank 4. You passed an array '
-                             'with shape', self.x.shape)
-        channels_axis = 3 if dim_ordering == 'tf' else 1
-        if self.x.shape[channels_axis] not in {1, 3, 4}:
-            raise ValueError('NumpyArrayIterator is set to use the '
-                             'dimension ordering convention "' + dim_ordering + '" '
-                             '(channels on axis ' + str(channels_axis) + '), i.e. expected '
-                             'either 1, 3 or 4 channels on axis ' + str(channels_axis) + '. '
-                             'However, it was passed an array with shape ' + str(self.x.shape) +
-                             ' (' + str(self.x.shape[channels_axis]) + ' channels).')
+        if isinstance(x, np.ndarray):
+            self.x = x
+        else:
+            self.x = np.asarray(x, dtype=K.floatx())
+        if cached_features:
+            if self.x.ndim != 4:
+                raise ValueError('Input data in `NumpyArrayIterator` '
+                                 'should have rank 4. You passed an array '
+                                 'with shape', self.x.shape)
+            channels_axis = 3 if dim_ordering == 'tf' else 1
+            if self.x.shape[channels_axis] not in {1, 3, 4}:
+                raise ValueError('NumpyArrayIterator is set to use the '
+                                 'dimension ordering convention "' + dim_ordering + '" '
+                                 '(channels on axis ' + str(channels_axis) + '), i.e. expected '
+                                 'either 1, 3 or 4 channels on axis ' + str(channels_axis) + '. '
+                                 'However, it was passed an array with shape ' + str(self.x.shape) +
+                                 ' (' + str(self.x.shape[channels_axis]) + ' channels).')
         if y is not None:
-            self.y = np.asarray(y)
+            if isinstance(y, np.ndarray):
+                self.y = y
+            else:
+                self.y = np.asarray(y, dtype=K.floatx())
         else:
             self.y = None
         self.image_data_generator = image_data_generator
