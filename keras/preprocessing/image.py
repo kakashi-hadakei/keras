@@ -771,11 +771,12 @@ class DirectoryIterator(Iterator):
 
         white_list_formats = {'png', 'jpg', 'jpeg', 'bmp'}
 
-        if not classes:
-            classes = []
-            for subdir in sorted(os.listdir(directory)):
-                if os.path.isdir(os.path.join(directory, subdir)):
-                    classes.append(subdir)
+        for directory in self.directory:
+            if not classes:
+                classes = set()
+                for subdir in sorted(os.listdir(directory)):
+                    if os.path.isdir(os.path.join(directory, subdir)):
+                        classes.add(subdir)
         self.nb_class = len(classes)
         self.class_indices = dict(zip(classes, range(len(classes))))
 
