@@ -739,7 +739,10 @@ class DirectoryIterator(Iterator):
                  follow_links=False):
         if dim_ordering == 'default':
             dim_ordering = K.image_dim_ordering()
-        self.directory = directory
+        if isinstance(directory, list):
+            self.directory = directory
+        else:
+            self.directory = [directory]
         self.image_data_generator = image_data_generator
         self.target_size = tuple(target_size)
         if color_mode not in {'rgb', 'grayscale'}:
@@ -783,15 +786,15 @@ class DirectoryIterator(Iterator):
         self.classes = []
         self.filenames = []
 
-        for subdir in classes:
-            subpath = os.path.join(directory, subdir)
-            for root, _, files in _recursive_list(subpath):
-                for fname in files:
-                    if fname.lower().split('.')[-1] in white_list_formats:
-                        self.classes.append(self.class_indices[subdir])
-                        # add filename relative to directory
-                        absolute_path = os.path.join(root, fname)
-                        self.filenames.append(os.path.relpath(absolute_path, directory))
+        for directory in self.directory:
+            for subdir in classes:
+                subpath = os.path.join(directory, subdir)
+                for root, _, files in _recursive_list(subpath):
+                    for fname in files:
+                        if fname.lower().split('.')[-1] in white_list_formats:
+                            self.classes.append(self.class_indices[subdir])
+                            # add filename relative to directory
+                            self.filenames.append(os.path.join(root, fname))
 
         self.nb_sample = len(self.classes)
         self.classes = np.array(self.classes, dtype='int32')
@@ -809,7 +812,7 @@ class DirectoryIterator(Iterator):
         # build batch of image data
         for i, j in enumerate(index_array):
             fname = self.filenames[j]
-            img = load_img(os.path.join(self.directory, fname),
+            img = load_img(fname,
                            grayscale=grayscale,
                            target_size=self.target_size)
             x = img_to_array(img, dim_ordering=self.dim_ordering)
