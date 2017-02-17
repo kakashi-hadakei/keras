@@ -7,7 +7,6 @@ import time
 import numpy as np
 import multiprocessing
 import threading
-import inspect
 
 import six
 
@@ -1475,7 +1474,8 @@ class Model(Container):
         if validation_data is not None:
             self._make_test_function()
 
-        val_gen = inspect.isgenerator(validation_data)
+        # python 2 has `next`, 3 has `__next__`, avoid any explicit version checks
+        val_gen = (hasattr(validation_data, 'next') or hasattr(validation_data, '__next__'))
         if val_gen and not nb_val_samples:
             raise ValueError('When using a generator for validation data you must specify `nb_val_samples`.')
 
