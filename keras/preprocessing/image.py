@@ -704,6 +704,7 @@ class NumpyArrayIterator(Iterator):
         self.save_to_dir = save_to_dir
         self.save_prefix = save_prefix
         self.save_format = save_format
+        self.cached_features = cached_features
         super(NumpyArrayIterator, self).__init__(x.shape[0], batch_size, shuffle, seed)
 
     def next(self):
@@ -713,22 +714,28 @@ class NumpyArrayIterator(Iterator):
         # see http://anandology.com/blog/using-iterators-and-generators/
         with self.lock:
             index_array, current_index, current_batch_size = next(self.index_generator)
+
         # The transformation of images is not under thread lock
         # so it can be done in parallel
-        batch_x = np.zeros(tuple([current_batch_size] + list(self.x.shape)[1:]), dtype=K.floatx())
-        for i, j in enumerate(index_array):
-            x = self.x[j]
-            x = self.image_data_generator.random_transform(x.astype(K.floatx()))
-            x = self.image_data_generator.standardize(x)
-            batch_x[i] = x
-        if self.save_to_dir:
-            for i in range(current_batch_size):
-                img = array_to_img(batch_x[i], self.dim_ordering, scale=True)
-                fname = '{prefix}_{index}_{hash}.{format}'.format(prefix=self.save_prefix,
-                                                                  index=current_index + i,
-                                                                  hash=np.random.randint(1e4),
-                                                                  format=self.save_format)
-                img.save(os.path.join(self.save_to_dir, fname))
+
+        # cached base model features will not be transformed or saved to dir the same way as images
+        if self.cached_features:
+            batch_x = self.x[index_array]
+        else:
+            batch_x = np.zeros(tuple([current_batch_size] + list(self.x.shape)[1:]), dtype=K.floatx())
+            for i, j in enumerate(index_array):
+                x = self.x[j]
+                x = self.image_data_generator.random_transform(x.astype(K.floatx()))
+                x = self.image_data_generator.standardize(x)
+                batch_x[i] = x
+            if self.save_to_dir:
+                for i in range(current_batch_size):
+                    img = array_to_img(batch_x[i], self.dim_ordering, scale=True)
+                    fname = '{prefix}_{index}_{hash}.{format}'.format(prefix=self.save_prefix,
+                                                                      index=current_index + i,
+                                                                      hash=np.random.randint(1e4),
+                                                                      format=self.save_format)
+                    img.save(os.path.join(self.save_to_dir, fname))
         if self.y is None:
             return batch_x
         batch_y = self.y[index_array]
