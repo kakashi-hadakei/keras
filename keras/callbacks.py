@@ -705,7 +705,7 @@ class ReduceLROnPlateau(Callback):
     """
 
     def __init__(self, monitor='val_loss', factor=0.1, patience=10,
-                 verbose=0, mode='auto', epsilon=1e-4, cooldown=0, min_lr=0):
+                 verbose=0, mode='auto', epsilon=1e-4, cooldown=0, min_lr=0, layers_to_fine_tune=None):
         super(ReduceLROnPlateau, self).__init__()
 
         self.monitor = monitor
@@ -714,6 +714,7 @@ class ReduceLROnPlateau(Callback):
                              'does not support a factor >= 1.0.')
         self.factor = factor
         self.min_lr = min_lr
+        self.layers_to_fine_tune = layers_to_fine_tune
         self.epsilon = epsilon
         self.patience = patience
         self.verbose = verbose
@@ -773,6 +774,12 @@ class ReduceLROnPlateau(Callback):
                             print('\nEpoch %05d: reducing learning rate to %s.' % (epoch, new_lr))
                         self.cooldown_counter = self.cooldown
                         self.wait = 0
+
+                        if self.layers_to_fine_tune:
+                            layer = self.layers_to_fine_tune.pop()
+                            layer.trainable = True
+                            print('Un-freezing layer: {} in `layers_to_fine_tune`.'.format(layer.name))
+
                 self.wait += 1
 
     def in_cooldown(self):
