@@ -679,7 +679,7 @@ class NumpyArrayIterator(Iterator):
             self.x = x
         else:
             self.x = np.asarray(x, dtype=K.floatx())
-        if cached_features:
+        if not cached_features:
             if self.x.ndim != 4:
                 raise ValueError('Input data in `NumpyArrayIterator` '
                                  'should have rank 4. You passed an array '
@@ -792,7 +792,8 @@ class DirectoryIterator(Iterator):
                     if os.path.isdir(os.path.join(directory, subdir)):
                         classes.add(subdir)
         self.nb_class = len(classes)
-        self.class_indices = dict(zip(classes, range(len(classes))))
+        # make sure classes are sorted alphabetically
+        self.class_indices = dict(zip(sorted(classes), range(len(classes))))
 
         def _recursive_list(subpath):
             return sorted(os.walk(subpath, followlinks=follow_links), key=lambda tpl: tpl[0])
