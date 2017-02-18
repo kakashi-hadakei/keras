@@ -777,8 +777,11 @@ class ReduceLROnPlateau(Callback):
 
                         if self.layers_to_fine_tune:
                             layer = self.layers_to_fine_tune.pop()
-                            layer.trainable = True
                             print('Un-freezing layer: {} in `layers_to_fine_tune`.'.format(layer.name))
+                            layer.trainable = True
+
+                            # model needs to be re-compiled for `layer.trainable` to take effect
+                            self.model.compile(self.model.optimizer, self.model.loss, self.model.metrics)
 
                 self.wait += 1
 
